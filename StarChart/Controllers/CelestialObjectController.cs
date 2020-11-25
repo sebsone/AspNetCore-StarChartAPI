@@ -19,28 +19,36 @@ namespace StarChart.Controllers
             _context = context;
         }
 
-        [HttpGet("{id:int}")]
-        public IActionResult GetById(int Id)
+        [HttpGet("{id:int}", Name = "GetById")]
+        public IActionResult GetById(int id)
         {
-            CelestialObject obj = _context.CelestialObjects.Where(o => o.Id == Id).FirstOrDefault();
-            if (obj == null) return NotFound();
-            //obj.Satellites.Add(_context.CelestialObjects.Where(o => o.OrbitedObjectId == Id));
-            return Ok(obj);
+            var celestialObject = _context.CelestialObjects.Find(id);
+            if (celestialObject == null) return NotFound();
+            celestialObject.Satellites =_context.CelestialObjects.Where(o => o.OrbitedObjectId == id).ToList();
+            return Ok(celestialObject);
         }
 
         [HttpGet("{name}")]
         public IActionResult GetByName(string name)
         {
-            CelestialObject obj = _context.CelestialObjects.Where(o => o.Name == name).FirstOrDefault();
-            if (obj == null) return NotFound();
-            return Ok(obj);
+            var celestialObjects = _context.CelestialObjects.Where(o => o.Name == name);
+            if (!celestialObjects.Any()) return NotFound();
+            foreach (var celestialObject in celestialObjects)
+            {
+                celestialObject.Satellites = _context.CelestialObjects.Where(e => e.OrbitedObjectId == celestialObject.Id).ToList();
+            }
+            return Ok(celestialObjects.ToList());
         }
 
         [HttpGet]
         public IActionResult GetAll()
         {
-            List<CelestialObject> objs = _context.CelestialObjects.ToList();
-            return Ok(objs);
+            var celestialObjects = _context.CelestialObjects.ToList();
+            foreach (var celestialObject in celestialObjects)
+            {
+                celestialObject.Satellites = _context.CelestialObjects.Where(e => e.OrbitedObjectId == celestialObject.Id).ToList();
+            }
+            return Ok(celestialObjects);
         }
     }
 }
